@@ -11,6 +11,13 @@ Onrush Awareness is not affiliated with or endorsed by World Monitor; its name a
 Onrush's own, per upstream's
 [trademark policy](https://github.com/koala73/worldmonitor/blob/main/docs/trademark-policy.mdx).
 
+## Never push upstream
+
+**Nothing from this fork goes to `koala73/worldmonitor`.** No pushes of any branch, no pull
+requests (including GitHub's "Contribute" button), no issues opened on Onrush's behalf. The
+upstream remote is fetch-only. Every checkout disables its push URL, as shown under *Local
+checkout*. Changes flow one way: upstream → `main` → `onrush`.
+
 ## Branch model
 
 | Branch | Role |
@@ -37,8 +44,12 @@ The repository is large: about 8,200 files and a 236 MB checkout.
 git clone https://github.com/CannonWest/worldmonitor C:/Users/Canno/CannonGround/sites/onrush-awareness
 cd C:/Users/Canno/CannonGround/sites/onrush-awareness
 git remote add upstream https://github.com/koala73/worldmonitor
+git remote set-url --push upstream no_push--never-push-upstream
 git checkout onrush
 ```
+
+`git remote -v` must show `upstream ... no_push--never-push-upstream (push)`. Any push to
+upstream then fails locally, before it reaches GitHub.
 
 ## Holding page (milestone OA-M0)
 
