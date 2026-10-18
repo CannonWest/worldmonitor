@@ -1,5 +1,6 @@
 import { MapPopup as UpstreamMapPopup } from '../../src/components/MapPopup';
 import { REFERENCE_LAYERS } from './catalog.mjs';
+import { validUsgsUrl, USGS_URL } from '../shared/earthquakes.mjs';
 
 const layerKeys: Record<string, string> = {
   base: 'bases', nuclear: 'nuclear', spaceport: 'spaceports', cable: 'cables',
@@ -17,8 +18,9 @@ export class MapPopup extends UpstreamMapPopup {
 
   override show(data: Parameters<UpstreamMapPopup['show']>[0]): void {
     this.hide('replacement');
+    const earthquake = data.type === 'earthquake';
     const layer = REFERENCE_LAYERS.find((entry) => entry.key === layerKeys[data.type]);
-    if (!layer) return;
+    if (!layer && !earthquake) return;
     const item = data.data as unknown as Record<string, unknown>;
     const popup = document.createElement('section');
     popup.className = 'oa-ref-popup';
@@ -28,14 +30,14 @@ export class MapPopup extends UpstreamMapPopup {
     close.className = 'oa-button';
     close.type = 'button';
     close.textContent = 'Close';
-    close.setAttribute('aria-label', 'Close reference details');
+    close.setAttribute('aria-label', earthquake ? 'Close earthquake details' : 'Close reference details');
     close.addEventListener('click', () => this.hide());
     const eyebrow = document.createElement('p');
     eyebrow.className = 'oa-eyebrow';
-    eyebrow.textContent = 'SAVED REFERENCE ENTRY';
+    eyebrow.textContent = earthquake ? 'USGS · PRELIMINARY EARTHQUAKE RECORD' : 'SAVED REFERENCE ENTRY';
     const title = document.createElement('h2');
     title.id = 'oa-popup-title';
-    title.textContent = typeof item.name === 'string' ? item.name : layer.label;
+    title.textContent = earthquake ? `M${Number(item.magnitude).toFixed(1)} · ${item.place}` : typeof item.name === 'string' ? item.name : layer!.label;
     popup.append(eyebrow, title);
     const details = document.createElement('dl');
     const fields = [['country', 'Recorded country'], ['operator', 'Recorded operator'], ['mineral', 'Mineral'], ['description', 'Description']] as const;
@@ -48,11 +50,20 @@ export class MapPopup extends UpstreamMapPopup {
       description.textContent = value;
       details.append(term, description);
     }
+    if (earthquake) {
+      for (const [label, value] of [['Occurred', new Date(Number(item.occurredAt)).toLocaleString()], ['Depth', `${item.depthKm} km`]] as const) {
+        const term = document.createElement('dt');
+        term.textContent = label;
+        const description = document.createElement('dd');
+        description.textContent = value!;
+        details.append(term, description);
+      }
+    }
     const limit = document.createElement('p');
-    limit.textContent = layer.detail + '. Current operating status and source freshness have not been verified.';
+    limit.textContent = earthquake ? 'USGS records can be revised. This is a source observation, not an impact or hazard assessment.' : layer!.detail + '. Current operating status and source freshness have not been verified.';
     const source = document.createElement('a');
-    source.href = `https://github.com/CannonWest/worldmonitor/blob/${__BUILD_HASH__}/${layer.file}`;
-    source.textContent = 'View bundled source';
+    source.href = earthquake ? validUsgsUrl(item.sourceUrl) ? String(item.sourceUrl) : USGS_URL : `https://github.com/CannonWest/worldmonitor/blob/${__BUILD_HASH__}/${layer!.file}`;
+    source.textContent = earthquake ? 'USGS event record' : 'View bundled source';
     source.target = '_blank';
     source.rel = 'noopener noreferrer';
     popup.append(details, limit, source, close);

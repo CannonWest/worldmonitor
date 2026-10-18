@@ -45,7 +45,7 @@ export function createWorker({ routes, verifyAccess = verifyAccessToken }) {
       const handler = routes[url.pathname];
       if (!handler) return json({ error: 'Route not prepared' }, 503);
       try {
-        const response = await withExecution(context, () => handler(adapted, context));
+        const response = await withExecution(context, () => handler(adapted, context, env));
         // Access is private. Upstream CDN headers do not authorize shared caches.
         const secured = new Response(response.body, response);
         secured.headers.set('Cache-Control', 'no-store');

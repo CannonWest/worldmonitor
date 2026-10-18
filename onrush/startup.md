@@ -3,8 +3,8 @@
 This is the first implementation area, built on the existing Onrush fork and
 holding page. It adapts the real upstream session and bootstrap handlers to a
 Cloudflare Worker without changing upstream files. It is now wired into the
-[area 2 reference dashboard](dashboard.md). Live-feed producers have not been
-enabled.
+[area 2 reference dashboard](dashboard.md). The first live producer and layer are
+documented in [area 3 earthquakes](earthquakes.md); weather remains pending.
 
 ## Request contract
 
@@ -13,6 +13,7 @@ enabled.
 | `/api/wm-session` | POST, OPTIONS | Upstream HMAC session, HttpOnly host-only cookie and Redis limiter |
 | `/api/bootstrap` | GET, OPTIONS | Only earthquakes and weather alerts; missing keys remain explicitly missing |
 | `/api/geo` | GET, OPTIONS | Cloudflare country code, or `XX` when unavailable |
+| `/api/seismology/v1/list-earthquakes` | GET, OPTIONS | Owned USGS snapshot and freshness metadata; no query parameters |
 
 All other API paths are refused. Bootstrap accepts `tier=fast`, `tier=slow`, or
 `keys=earthquakes,weatherAlerts` (including a single selected key), optionally
@@ -118,7 +119,8 @@ page, session minting and bootstrap separately; a login redirect alone does not
 prove the dashboard is healthy. A preview can deploy the PR head without merging
 it. Its footer links to the exact source commit.
 
-M0's original configuration stays in `holding/wrangler.jsonc`. The reference dashboard has its own build and request
-audit, with proof limits recorded in `dashboard.md`. First live feeds need owned
-earthquake/weather producers and reader/refresh verification; the startup reader
-does not fetch USGS or NWS on a cache miss.
+M0's original configuration stays in `holding/wrangler.jsonc`. The dashboard has
+its own build and request audit, with proof limits recorded in `dashboard.md`.
+Each live feed needs an owned producer and reader/refresh verification. The earthquake producer now runs on
+the Worker's five-minute cron; the startup reader does not fetch USGS or NWS on
+a cache miss. See `earthquakes.md` for its clocks, retention and live checks.

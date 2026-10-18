@@ -4,6 +4,7 @@ export const STARTUP_METHODS = Object.freeze({
   '/api/wm-session': Object.freeze(['POST', 'OPTIONS']),
   '/api/bootstrap': Object.freeze(['GET', 'OPTIONS']),
   '/api/geo': Object.freeze(['GET', 'OPTIONS']),
+  '/api/seismology/v1/list-earthquakes': Object.freeze(['GET', 'OPTIONS']),
 });
 
 export const SELECTED_KEYS = Object.freeze(['earthquakes', 'weatherAlerts']);

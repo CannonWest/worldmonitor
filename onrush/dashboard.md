@@ -29,15 +29,16 @@ boundary default. No new boundaries or imagery sources are introduced. Detailed
 tiles and the Solomon imagery stack remain later map work.
 
 Only catalogue keys are restored or saved; all other renderer layers start
-false. Reference popups show bundled descriptions/provenance without invoking
+false, except the separately persisted earthquake layer described in
+[area 3](earthquakes.md). Reference popups show bundled descriptions/provenance without invoking
 chokepoint history, live context, premium gates or unported readers. The original
 upstream popup implementation and data remain unchanged.
 
-The entry mints an owned session and reads the fast bootstrap tier (two Redis
-GETs). It skips the empty slow tier. The response reader distinguishes missing
-seeds, a received snapshot and an unavailable/malformed response. A snapshot
-does not establish freshness; live overlays are not yet wired. Reference
-interaction remains usable during an API outage, with a retry control.
+The entry mints an owned session and reads the earthquake endpoint (one Redis
+GET). The selected fast/slow bootstrap API remains available and tested. Area 3
+adds scheduled USGS publication, independently aged source/retrieval clocks,
+earthquake controls and details. Missing, empty, stale and unavailable results
+remain distinct. Reference interaction stays usable during an API outage.
 
 Worker asset responses carry `no-store`, `noindex`, `nosniff`, a same-origin CSP,
 no frames and restricted browser permissions. Inline styles support the map

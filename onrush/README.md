@@ -5,8 +5,9 @@ Data LLC at `awareness.onrushdata.com`.
 
 **Based on [World Monitor](https://github.com/koala73/worldmonitor)** by Elie Habib, licensed
 under the GNU Affero General Public License v3.0 only (see [`LICENSE`](../LICENSE)). Onrush
-Awareness is a modified version. Its complete corresponding source is this repository's
-`onrush` branch. Upstream's copyright, licence and attribution notices are kept as they are.
+Awareness is a modified version. Each deployed build's footer links to its exact
+corresponding source commit in this repository; `onrush` is the trunk branch.
+Upstream's copyright, licence and attribution notices are kept as they are.
 Onrush Awareness is not affiliated with or endorsed by World Monitor; its name and brand are
 Onrush's own, per upstream's
 [trademark policy](https://github.com/koala73/worldmonitor/blob/main/docs/trademark-policy.mdx).
@@ -56,8 +57,9 @@ upstream then fails locally, before it reaches GitHub.
 The lean port is proceeding one area at a time. Area 1 adds the tested Worker
 [startup boundary](startup.md). Area 2 wires it into a [reference dashboard](dashboard.md)
 using the upstream map renderers and bundled data. Deploy the current dashboard
-with the configuration in [startup.md](startup.md#deployment). Owned live-feed
-producers follow separately.
+with the configuration in [startup.md](startup.md#deployment). Area 3 adds the
+owned [USGS earthquake producer and live layer](earthquakes.md). Weather and
+additional feeds follow separately.
 
 `onrush/holding/` preserves the original no-script holding page and its assets-only Worker configuration named
 `onrush-awareness` on the custom domain `awareness.onrushdata.com`. Milestone OA-M1 reuses

@@ -8,6 +8,8 @@ import { Miniflare, convertV4MiniflareOptions } from 'miniflare';
 import { exportJWK, generateKeyPair, SignJWT } from 'jose';
 import { chromium } from 'playwright';
 import { expect } from '@playwright/test';
+import { earthquakeFixture } from './earthquake-fixture.mjs';
+import { FRESH_MS, EARTHQUAKE_KEY } from '../shared/earthquakes.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const site = resolve(here, '../dist/site');
@@ -25,6 +27,12 @@ test(`built dashboard (${webgl ? 'real WebGL2, software renderer fixture' : 'SVG
   const browserRequests = [];
   const csp = [];
   let apiMode = 'missing';
+  const snapshotForMode = () => {
+    const snapshot = earthquakeFixture(Date.now() - (apiMode === 'stale' ? FRESH_MS + 60_000 : 0));
+    snapshot.earthquakes[0].location = { latitude: 10, longitude: 10 };
+    if (apiMode === 'empty') { snapshot.earthquakes = []; snapshot._onrush.recordCount = 0; }
+    return snapshot;
+  };
   let mf;
   let browser;
   const team = 'https://fixture.cloudflareaccess.com';
@@ -83,8 +91,9 @@ test(`built dashboard (${webgl ? 'real WebGL2, software renderer fixture' : 'SVG
       const batch = Array.isArray(commandsBody[0]);
       const commands = batch ? commandsBody : [commandsBody];
       redisBatches.push(commands);
-      const results = commands.map(([command]) => apiMode === 'unavailable' ? { error: 'fixture outage' }
-        : { result: String(command).toUpperCase().startsWith('EVAL') ? [29, 30] : null });
+      const results = commands.map(([command, key]) => apiMode === 'unavailable' ? { error: 'fixture outage' }
+        : { result: String(command).toUpperCase().startsWith('EVAL') ? [29, 30]
+          : key === EARTHQUAKE_KEY && apiMode !== 'missing' ? JSON.stringify(snapshotForMode()) : null });
       return Response.json(batch ? results : results[0]);
     },
   }] }));
@@ -118,6 +127,13 @@ test(`built dashboard (${webgl ? 'real WebGL2, software renderer fixture' : 'SVG
     });
   }
   const page = await context.newPage();
+  const waitForMapPixels = async () => {
+    if (!webgl) return;
+    // Renderer construction precedes MapLibre's first rasterized frame. A
+    // uniform blank canvas compresses below this bound at this fixed viewport.
+    await expect.poll(async () => (await page.locator('#deckgl-basemap canvas').screenshot()).byteLength,
+      { timeout: 20_000, message: 'WebGL basemap must contain rendered map pixels' }).toBeGreaterThan(12_000);
+  };
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('request', (request) => browserRequests.push(request.url()));
   page.on('console', (message) => {
@@ -128,6 +144,7 @@ test(`built dashboard (${webgl ? 'real WebGL2, software renderer fixture' : 'SVG
   });
   await page.goto(origin + '/dashboard');
   await page.waitForSelector('html[data-onrush-ready="true"][data-onrush-data-ready="true"]');
+  await waitForMapPixels();
   const renderer = await page.locator('#oa-renderer').getAttribute('data-renderer');
   t.diagnostic('Desktop renderer: ' + renderer);
   if (webgl) { assert.equal(renderer, 'deck'); await page.waitForSelector('#deckgl-basemap canvas'); }
@@ -135,20 +152,21 @@ test(`built dashboard (${webgl ? 'real WebGL2, software renderer fixture' : 'SVG
   assert.equal(await page.title(), 'Onrush Awareness');
   assert.equal(await page.locator('input[data-layer]').count(), 9);
   assert.equal(await page.locator('input[data-layer="weather"]').count(), 0);
-  assert.match(await page.locator('#oa-data-status').textContent(), /Earthquake and weather data are not available/);
+  assert.match(await page.locator('#oa-data-status').textContent(), /Earthquake feed has not been seeded/);
   assert.match(await page.locator('#oa-session-status').textContent(), /established/);
   assert.ok((await context.cookies()).some((cookie) => cookie.name === 'wm-session' && cookie.httpOnly));
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
   await page.screenshot({ path: resolve(evidence, 'desktop.png'), fullPage: true });
   await page.getByRole('button', { name: 'Sources', exact: true }).click();
   await page.getByRole('dialog', { name: 'Source register' }).waitFor();
-  assert.equal(await page.locator('dialog tbody tr').count(), 9);
+  assert.equal(await page.locator('dialog tbody tr').count(), 10);
   await page.screenshot({ path: resolve(evidence, 'sources.png'), fullPage: true });
   await page.getByRole('button', { name: 'Close source register' }).click();
   await page.locator('input[data-layer="cables"]').uncheck();
   if (renderer === 'svg') await expect(page.locator('.cable-path:visible')).toHaveCount(0);
   await page.reload();
   await page.waitForSelector('html[data-onrush-ready="true"]');
+  await waitForMapPixels();
   assert.equal(await page.locator('input[data-layer="cables"]').isChecked(), false);
   const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('onrush:reference-layers:v1')));
   assert.equal(stored.military, undefined);
@@ -174,13 +192,46 @@ test(`built dashboard (${webgl ? 'real WebGL2, software renderer fixture' : 'SVG
   }
   await page.getByRole('button', { name: 'Reset view' }).click();
   await page.waitForSelector('html[data-onrush-data-ready="true"]');
+  apiMode = 'fresh';
+  await page.getByRole('button', { name: 'Check again' }).click();
+  await expect(page.locator('#oa-data-status')).toHaveAttribute('data-state', 'fresh');
+  await expect(page.locator('#oa-data-status')).toContainText('1 event');
+  assert.match(await page.locator('#oa-feed-times').textContent(), /Source generated:.*Retrieved:/);
+  if (renderer === 'svg') {
+    await page.locator('.earthquake-marker:visible').first().click();
+    await expect(page.locator('.oa-ref-popup')).toContainText('PRELIMINARY EARTHQUAKE RECORD');
+    await expect(page.locator('.oa-ref-popup a')).toHaveAttribute('href', /https:\/\/earthquake\.usgs\.gov\/earthquakes\/eventpage\//);
+    await page.screenshot({ path: resolve(evidence, 'earthquake-details.png'), fullPage: true });
+    await page.getByRole('button', { name: 'Close earthquake details' }).click();
+  }
+  await page.locator('#oa-earthquakes-toggle').uncheck();
+  if (renderer === 'svg') await expect(page.locator('.earthquake-marker:visible')).toHaveCount(0);
+  await page.reload();
+  await page.waitForSelector('html[data-onrush-ready="true"][data-onrush-data-ready="true"]');
+  await waitForMapPixels();
+  assert.equal(await page.locator('#oa-earthquakes-toggle').isChecked(), false);
+  await page.locator('#oa-earthquakes-toggle').check();
+  if (renderer === 'svg') await expect(page.locator('.earthquake-marker:visible')).toHaveCount(1);
+  await page.screenshot({ path: resolve(evidence, 'desktop.png'), fullPage: true });
+  apiMode = 'stale';
+  await page.getByRole('button', { name: 'Check again' }).click();
+  await expect(page.locator('#oa-data-status')).toContainText('STALE');
+  const retainedTimes = await page.locator('#oa-feed-times').textContent();
   apiMode = 'unavailable';
   await page.getByRole('button', { name: 'Check again' }).click();
-  await page.getByText('Feed data could not be checked. Try again when the connection is restored.').waitFor();
+  await expect(page.locator('#oa-data-status')).toContainText('Refresh unavailable. Showing the last received snapshot');
+  assert.equal(await page.locator('#oa-feed-times').textContent(), retainedTimes);
   await page.screenshot({ path: resolve(evidence, 'unavailable.png'), fullPage: true });
+  apiMode = 'empty';
+  await page.getByRole('button', { name: 'Check again' }).click();
+  await expect(page.locator('#oa-data-status')).toContainText('0 events');
+  if (renderer === 'svg') await expect(page.locator('.earthquake-marker:visible')).toHaveCount(0);
   apiMode = 'missing';
   await page.getByRole('button', { name: 'Check again' }).click();
-  await page.getByText('Earthquake and weather data are not available. Missing data does not mean zero events.').waitFor();
+  await expect(page.locator('#oa-data-status')).toContainText('Earthquake feed has not been seeded');
+  apiMode = 'fresh';
+  await page.getByRole('button', { name: 'Check again' }).click();
+  await expect(page.locator('#oa-data-status')).toHaveAttribute('data-state', 'fresh');
   csp.push(...await page.evaluate(() => window.__onrushCsp));
   if (!webgl) {
     await page.setViewportSize({ width: 390, height: 844 });
@@ -194,9 +245,9 @@ test(`built dashboard (${webgl ? 'real WebGL2, software renderer fixture' : 'SVG
   assert.deepEqual(errors, []);
   assert.deepEqual(external, []);
   assert.deepEqual(csp, []);
-  assert.ok(requests.filter((request) => request.path.startsWith('/api/')).every((request) => /^\/api\/(?:bootstrap\?|wm-session$)/.test(request.path)));
+  assert.ok(requests.filter((request) => request.path.startsWith('/api/')).every((request) => /^\/api\/(?:seismology\/v1\/list-earthquakes$|wm-session$)/.test(request.path)));
   for (const commands of redisBatches.filter((commands) => commands.some(([command]) => command === 'GET'))) {
-    assert.deepEqual(commands, [['GET', 'seismology:earthquakes:v1'], ['GET', 'weather:alerts:v1']]);
+    assert.deepEqual(commands, [['GET', 'seismology:earthquakes:v1']]);
   }
   await context.close();
 });
