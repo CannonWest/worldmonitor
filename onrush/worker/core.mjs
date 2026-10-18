@@ -1,5 +1,6 @@
 import { verifyAccess as verifyAccessToken } from './access.mjs';
 import { withExecution } from './execution.mjs';
+import { secureAssetResponse } from './asset-headers.mjs';
 import { STARTUP_METHODS, validBootstrapQuery } from '../shared/startup-policy.mjs';
 
 function json(body, status = 200, extra = {}) {
@@ -19,7 +20,7 @@ export function createWorker({ routes, verifyAccess = verifyAccessToken }) {
 
       if (!url.pathname.startsWith('/api/')) {
         if (!env.ASSETS) return json({ error: 'Assets not configured' }, 503);
-        return env.ASSETS.fetch(request);
+        return secureAssetResponse(await env.ASSETS.fetch(request));
       }
       const methods = STARTUP_METHODS[url.pathname];
       if (!methods) return json({ error: 'Route not enabled' }, 404);

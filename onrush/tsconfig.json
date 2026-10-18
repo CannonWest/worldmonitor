@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "tsBuildInfoFile": "../node_modules/.cache/tsconfig.onrush.tsbuildinfo"
+  },
+  "include": ["client/**/*.ts", "../src/**/*.d.ts"],
+  "exclude": ["../src/workers/ml.worker.ts"]
+}

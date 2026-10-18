@@ -36,6 +36,10 @@ test('authenticated assets, local geo and same-origin preflight do not call upst
   const worker = createWorker({ routes: {}, verifyAccess: allowed });
   const asset = await worker.fetch(request('/'), { ...env, ASSETS: { fetch: async () => new Response('holding fixture') } }, context);
   assert.equal(await asset.text(), 'holding fixture');
+  assert.equal(asset.headers.get('cache-control'), 'no-store');
+  assert.equal(asset.headers.get('x-robots-tag'), 'noindex, nofollow');
+  assert.match(asset.headers.get('content-security-policy'), /connect-src 'self';/);
+  assert.match(asset.headers.get('content-security-policy'), /frame-ancestors 'none'/);
   const geoRequest = request('/api/geo');
   Object.defineProperty(geoRequest, 'cf', { value: { country: 'GB' } });
   assert.deepEqual(await (await worker.fetch(geoRequest, env, context)).json(), { country: 'GB' });

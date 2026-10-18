@@ -1,4 +1,4 @@
-// Startup boundary only. M0 remains live until an explicitly authorized deploy.
+// Reference dashboard and startup API. M0 remains live until an authorized deploy.
 // ACCESS_AUD must be supplied for this hostname's Access application before
 // deployment. Missing Access configuration fails closed, including static assets.
 {
@@ -9,7 +9,8 @@
   "workers_dev": false,
   "preview_urls": false,
   "assets": {
-    "directory": "holding/site",
+    "directory": "dist/site",
+    "not_found_handling": "single-page-application",
     "binding": "ASSETS",
     "run_worker_first": true
   },
