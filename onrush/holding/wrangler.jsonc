@@ -1,0 +1,23 @@
+// Cloudflare Workers config for the OA-M0 holding page at awareness.onrushdata.com.
+//
+// Assets-only: no worker script ("main"), so the static-assets layer answers
+// every request and nothing is metered. Milestone OA-M1 replaces this with the
+// real build under the SAME Worker name, so the custom domain never moves.
+//
+// The hostname sits behind a Cloudflare Access application. Create that
+// application BEFORE the first deploy (see onrush/README.md); the deploy itself
+// creates the custom-domain DNS record on the onrushdata.com zone.
+//
+// Deploy from the repository root: npx wrangler deploy -c onrush/holding/wrangler.jsonc
+{
+    "name": "onrush-awareness",
+    "compatibility_date": "2026-10-18",
+    "assets": {
+        "directory": "./site"
+    },
+    "workers_dev": false,
+    "preview_urls": false,
+    "routes": [
+        { "pattern": "awareness.onrushdata.com", "custom_domain": true }
+    ]
+}
