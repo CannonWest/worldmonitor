@@ -1,0 +1,18 @@
+{
+  "name": "onrush-awareness",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "build": "node build-worker.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:browser": "node --test tests/browser-startup.mjs",
+    "test:runtime": "npm run build && node tests/workerd-smoke.mjs",
+    "check:worker": "npm run build && wrangler deploy --dry-run --config wrangler.jsonc --outdir dist/dry-run"
+  },
+  "devDependencies": {
+    "miniflare": "5.20261012.1-beta",
+    "wrangler": "4.151.1"
+  }
+}

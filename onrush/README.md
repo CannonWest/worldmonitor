@@ -53,6 +53,11 @@ upstream then fails locally, before it reaches GitHub.
 
 ## Holding page (milestone OA-M0)
 
+The lean port is proceeding one area at a time. Area 1 adds the tested Worker
+startup boundary and browser request adapter; see [its contract and checks](startup.md).
+It does not replace the live holding page. Dashboard integration and owned live
+feed producers follow separately.
+
 `onrush/holding/` is a no-script holding page served by an assets-only Worker named
 `onrush-awareness` on the custom domain `awareness.onrushdata.com`. Milestone OA-M1 reuses
 that Worker name for the real build, so the domain never moves.
