@@ -1,0 +1,26 @@
+// Reference dashboard and startup API, protected by the existing Access app.
+// Missing Access configuration fails closed, including static assets.
+{
+  "name": "onrush-awareness",
+  "main": "dist/worker.mjs",
+  "compatibility_date": "2026-10-18",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "assets": {
+    "directory": "dist/site",
+    "not_found_handling": "single-page-application",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "vars": {
+    "APP_ORIGIN": "https://awareness.onrushdata.com",
+    "NODE_ENV": "production",
+    "EARTHQUAKES_ENABLED": "1",
+    "ACCESS_TEAM_DOMAIN": "https://cannonwest.cloudflareaccess.com",
+    "ACCESS_AUD": "baef50731cffd2bbd8f1486d29d72361180a1f84db361bea5bc2251fb7d328e5"
+  },
+  "routes": [{ "pattern": "awareness.onrushdata.com", "custom_domain": true }],
+  "triggers": { "crons": ["*/5 * * * *"] },
+  "observability": { "enabled": true }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "onrush-awareness",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "build": "npm run build:worker && npm run build:client",
+    "build:worker": "node build-worker.mjs",
+    "build:client": "vite build --config vite.config.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "node --test tests/*.test.mjs",
+    "test:browser": "node --test tests/browser-startup.mjs",
+    "test:dashboard": "node --test tests/dashboard-browser.mjs",
+    "test:dashboard:webgl": "node --test tests/dashboard-webgl.mjs",
+    "test:runtime": "npm run build:worker && node tests/workerd-smoke.mjs",
+    "check:worker": "npm run build && wrangler deploy --dry-run --config wrangler.jsonc --outdir dist/dry-run"
+  },
+  "devDependencies": {
+    "miniflare": "5.20261012.1-beta",
+    "wrangler": "4.151.1"
+  }
+}

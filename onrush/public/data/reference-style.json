@@ -1,0 +1,12 @@
+{
+  "version": 8,
+  "name": "Onrush bundled reference map",
+  "sources": {
+    "countries": { "type": "geojson", "data": "/data/countries.geojson" }
+  },
+  "layers": [
+    { "id": "background", "type": "background", "paint": { "background-color": "#0a131b" } },
+    { "id": "land", "type": "fill", "source": "countries", "paint": { "fill-color": "#192d39" } },
+    { "id": "borders", "type": "line", "source": "countries", "paint": { "line-color": "#456071", "line-width": 0.6 } }
+  ]
+}
