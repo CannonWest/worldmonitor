@@ -3,7 +3,8 @@
 Area 2 connects the startup Worker to a small Onrush browser entry, reusing World
 Monitor's `MapContainer`, D3/SVG renderer, MapLibre/deck.gl renderer and bundled
 datasets. The full upstream application stays in the repository. No upstream
-implementation file is changed. The live host remains the OA-M0 holding page.
+implementation file is changed. The dashboard uses the same Access-protected
+hostname and Worker as the original OA-M0 holding page.
 
 The built page provides nine reference layers: cables, pipelines, waterways, AI
 data centers, bases, nuclear sites, spaceports, critical minerals and day/night.
@@ -80,4 +81,5 @@ must identify the tested commit and be refreshed after further UI changes.
 
 The dry run packages the dashboard without uploading. Local proof does not
 establish deployed Access, live freshness/refresh, source terms clearance or
-production GPU behavior. No merge, deployment or seeder run is part of this area.
+production GPU behavior. Deployment is a separate authorized action using the
+[startup deployment procedure](startup.md#deployment); no seeder runs with it.

@@ -55,10 +55,11 @@ upstream then fails locally, before it reaches GitHub.
 
 The lean port is proceeding one area at a time. Area 1 adds the tested Worker
 [startup boundary](startup.md). Area 2 wires it into a [reference dashboard](dashboard.md)
-using the upstream map renderers and bundled data. The live host still serves the
-holding page. Owned live-feed producers follow separately.
+using the upstream map renderers and bundled data. Deploy the current dashboard
+with the configuration in [startup.md](startup.md#deployment). Owned live-feed
+producers follow separately.
 
-`onrush/holding/` is a no-script holding page served by an assets-only Worker named
+`onrush/holding/` preserves the original no-script holding page and its assets-only Worker configuration named
 `onrush-awareness` on the custom domain `awareness.onrushdata.com`. Milestone OA-M1 reuses
 that Worker name for the real build, so the domain never moves.
 

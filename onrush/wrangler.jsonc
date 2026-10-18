@@ -1,6 +1,5 @@
-// Reference dashboard and startup API. M0 remains live until an authorized deploy.
-// ACCESS_AUD must be supplied for this hostname's Access application before
-// deployment. Missing Access configuration fails closed, including static assets.
+// Reference dashboard and startup API, protected by the existing Access app.
+// Missing Access configuration fails closed, including static assets.
 {
   "name": "onrush-awareness",
   "main": "dist/worker.mjs",
@@ -17,7 +16,8 @@
   "vars": {
     "APP_ORIGIN": "https://awareness.onrushdata.com",
     "NODE_ENV": "production",
-    "ACCESS_TEAM_DOMAIN": "https://cannonwest.cloudflareaccess.com"
+    "ACCESS_TEAM_DOMAIN": "https://cannonwest.cloudflareaccess.com",
+    "ACCESS_AUD": "baef50731cffd2bbd8f1486d29d72361180a1f84db361bea5bc2251fb7d328e5"
   },
   "routes": [{ "pattern": "awareness.onrushdata.com", "custom_domain": true }]
 }

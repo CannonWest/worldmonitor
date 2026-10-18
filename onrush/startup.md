@@ -3,8 +3,8 @@
 This is the first implementation area, built on the existing Onrush fork and
 holding page. It adapts the real upstream session and bootstrap handlers to a
 Cloudflare Worker without changing upstream files. It is now wired into the
-[area 2 reference dashboard](dashboard.md). The live site remains OA-M0; live
-feed producers have not been enabled.
+[area 2 reference dashboard](dashboard.md). Live-feed producers have not been
+enabled.
 
 ## Request contract
 
@@ -96,16 +96,29 @@ These checks do not prove deployed Access, production freshness, seeder operatio
 or live-feed refresh. Dashboard rendering is checked separately, including
 missing-seed/outage/recovery states.
 
-## Deployment prerequisites
+## Deployment
 
-`wrangler.jsonc` serves the built `dist/site` assets. Its `ACCESS_AUD` must
-be set to the existing Access application's audience for this hostname. Required
+`wrangler.jsonc` serves the built `dist/site` assets. Its `ACCESS_AUD` matches
+the existing Access application's audience for this hostname. Required
 Worker secrets are `WM_SESSION_SECRET` (at least 32 random characters),
 `UPSTASH_REDIS_REST_URL`, and `UPSTASH_REDIS_REST_TOKEN`. Never commit values or
 `.dev.vars`. Do not provision upstream World Monitor accounts or keys.
 
-No deploy is part of this area. M0's original configuration stays in
-`holding/wrangler.jsonc`. The reference dashboard has its own build and request
+After explicit deployment authorization, deploy a committed and pushed build
+from the repository root:
+
+```powershell
+npm --prefix onrush run check:worker
+.\onrush\node_modules\.bin\wrangler.cmd deploy --config onrush/wrangler.jsonc
+```
+
+Preserve the existing Access application and policy. Unauthenticated HTML,
+asset and API requests must redirect to Access login. Verify the authenticated
+page, session minting and bootstrap separately; a login redirect alone does not
+prove the dashboard is healthy. A preview can deploy the PR head without merging
+it. Its footer links to the exact source commit.
+
+M0's original configuration stays in `holding/wrangler.jsonc`. The reference dashboard has its own build and request
 audit, with proof limits recorded in `dashboard.md`. First live feeds need owned
 earthquake/weather producers and reader/refresh verification; the startup reader
 does not fetch USGS or NWS on a cache miss.
